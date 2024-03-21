@@ -3,8 +3,8 @@ Projeto de Python para a Aula de Desenvolvimento Rápido
 
 Componentes do Grupo: 
 
-Mateus 
-Miguel 
+Mateus //
+Miguel //
 Davi 
 
 
