@@ -10,7 +10,7 @@ Davi
 
 Idéia de Projeto: 
 
-Criar Um Player de Música (Estilo Spotfy)
+Criar Um Player de Música (Estilo Spotify)
 
 Links de Exemplo:
 
