@@ -4,18 +4,20 @@ import customtkinter
 import sqlite3
 from hashlib import sha256
 
+# Definindo a classe principal do aplicativo de login
 class LoginApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Login")
-        self.root.geometry("300x250")
-        self.root.configure(background="#f2f2f2")
-        self.conn = sqlite3.connect('watched_list.db')
-        self.create_table()
-        self.create_widgets()
+        self.root.title("Login")  # Título da janela
+        self.root.geometry("300x250")  # Tamanho da janela
+        self.root.configure(background="#f2f2f2")  # Cor de fundo da janela
+        self.conn = sqlite3.connect('watched_list.db')  # Conectando ao banco de dados
+        self.create_table()  # Criando as tabelas necessárias no banco de dados
+        self.create_widgets()  # Criando os elementos da interface gráfica
 
     def create_table(self):
         try:
+            # Criando a tabela de usuários, se não existir
             self.conn.execute('''
                 CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,6 +25,7 @@ class LoginApp:
                     password TEXT NOT NULL
                 )
             ''')
+            # Criando a tabela de séries/filmes assistidos, se não existir
             self.conn.execute('''
                 CREATE TABLE IF NOT EXISTS watched (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,11 +35,12 @@ class LoginApp:
                     FOREIGN KEY(user_id) REFERENCES users(id)
                 )
             ''')
-            self.conn.commit()
+            self.conn.commit()  # Confirmando as mudanças no banco de dados
         except Exception as e:
-            messagebox.showerror("Erro", f"Erro ao criar tabelas: {str(e)}")
+            messagebox.showerror("Erro", f"Erro ao criar tabelas: {str(e)}")  # Exibindo mensagem de erro
 
     def create_widgets(self):
+        # Criando e posicionando os elementos da interface gráfica
         self.username_label = customtkinter.CTkLabel(self.root, text="Usuário")
         self.username_label.pack(pady=5)
         self.username_entry = customtkinter.CTkEntry(self.root)
@@ -55,15 +59,16 @@ class LoginApp:
 
     def login(self):
         username = self.username_entry.get()
-        password = sha256(self.password_entry.get().encode()).hexdigest()
+        password = sha256(self.password_entry.get().encode()).hexdigest()  # Criptografando a senha
 
         try:
+            # Buscando o usuário no banco de dados
             cursor = self.conn.execute("SELECT id FROM users WHERE username=? AND password=?", (username, password))
             user = cursor.fetchone()
             if user:
-                self.root.destroy()
+                self.root.destroy()  # Fechando a janela de login
                 root = tk.Tk()
-                app = WatchedManagerApp(root, user[0])
+                app = WatchedManagerApp(root, user[0])  # Abrindo a janela de gerenciamento de séries/filmes
                 root.mainloop()
             else:
                 messagebox.showerror("Erro", "Usuário ou senha incorretos.")
@@ -75,7 +80,6 @@ class LoginApp:
         self.register_window.title("Registrar")
         self.register_window.geometry("300x250")
         self.register_window.configure(background="#f2f2f2")
-        
 
         self.new_username_label = customtkinter.CTkLabel(self.register_window, text="Novo Usuário")
         self.new_username_label.pack(pady=10)
@@ -92,19 +96,20 @@ class LoginApp:
 
     def register_user(self):
         username = self.new_username_entry.get()
-        password = sha256(self.new_password_entry.get().encode()).hexdigest()
+        password = sha256(self.new_password_entry.get().encode()).hexdigest()  # Criptografando a senha
 
         try:
             self.conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
-            self.conn.commit()
+            self.conn.commit()  # Confirmando o registro do novo usuário
             messagebox.showinfo("Sucesso", "Usuário registrado com sucesso!")
-            self.register_window.destroy()
+            self.register_window.destroy()  # Fechando a janela de registro
         except sqlite3.IntegrityError:
-            messagebox.showerror("Erro", "Nome de usuário já existe.")
+            messagebox.showerror("Erro", "Nome de usuário já existe.")  # Exibindo mensagem de erro se o usuário já existir
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao registrar usuário: {str(e)}")
 
 
+# Classe para gerenciar séries/filmes assistidos
 class WatchedManagerApp:
     def __init__(self, root, user_id):
         try:
@@ -112,20 +117,17 @@ class WatchedManagerApp:
             self.root.title("Séries/Filmes Assistidos")
             self.root.configure(background="#f2f2f2")
             root.resizable(False, False)
-            self.center_window()
-            # Configurar o estilo do ttk
+            self.center_window()  # Centralizando a janela
+
             style = ttk.Style(self.root)
-            style.theme_use('clam')  # 'clam', 'alt', 'default', 'classic' são algumas das opções
+            style.theme_use('clam')  # Configurando o estilo da interface gráfica
 
-            # Conectando-se ao banco de dados
-            self.conn = sqlite3.connect('watched_list.db')
-            self.create_table()
+            self.conn = sqlite3.connect('watched_list.db')  # Conectando ao banco de dados
+            self.create_table()  # Criando a tabela de séries/filmes, se não existir
 
-            # Criando a estrutura da interface gráfica
-            self.create_widgets()
+            self.create_widgets()  # Criando os elementos da interface gráfica
 
-            # Carregando as séries/filmes já adicionados
-            self.load_watched()
+            self.load_watched()  # Carregando as séries/filmes já adicionados
         except Exception as e:
             messagebox.showerror("Erro", f"Erro na inicialização do aplicativo: {str(e)}")
 
@@ -139,7 +141,7 @@ class WatchedManagerApp:
             x = (screen_width - window_width) // 2
             y = (screen_height - window_height) // 5
 
-            self.root.geometry(f"+{x}+{y}")
+            self.root.geometry(f"+{x}+{y}")  # Definindo a posição da janela
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao centralizar a janela: {str(e)}")
 
@@ -152,27 +154,24 @@ class WatchedManagerApp:
                     last_episode TEXT NOT NULL
                 )
             ''')
-            self.conn.commit()
+            self.conn.commit()  # Confirmando a criação da tabela
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao criar tabela: {str(e)}")
 
     def create_widgets(self):
         try:
-            # Lista de Séries/Filmes
+            # Criando e posicionando os elementos da interface gráfica
             title_label = customtkinter.CTkLabel(self.root, text="Séries Assistidas / Último episódio assistido", font=("Segoe UI", 16))
             title_label.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="nsew")
             self.listbox = tk.Listbox(self.root, width=50, height=20, font=("Segoe UI", 10))
             self.listbox.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
 
-            # Botão para adicionar Séries/Filmes
             add_button = customtkinter.CTkButton(self.root, text="+ Adicionar Série/Filme", command=self.open_add_window)
             add_button.grid(row=2, column=0, padx=5, pady=5, sticky="we")
 
-            # Botão para deletar Séries/Filmes
             delete_button = customtkinter.CTkButton(self.root, text="Deletar", command=self.delete_watched)
             delete_button.grid(row=3, column=0, padx=5, pady=5, sticky="we")
 
-            # Botão para editar o número do episódio
             edit_button = customtkinter.CTkButton(self.root, text="Editar", command=self.edit_watched)
             edit_button.grid(row=4, column=0, padx=5, pady=5, sticky="we")
         except Exception as e:
@@ -180,14 +179,12 @@ class WatchedManagerApp:
 
     def load_watched(self):
         try:
-            # Limpar a lista
-            self.listbox.delete(0, tk.END)
+            self.listbox.delete(0, tk.END)  # Limpando a lista
 
-            # Carregar séries/filmes do banco de dados
             cursor = self.conn.execute("SELECT id, title, last_episode FROM watched")
             for row in cursor:
                 id, title, last_episode = row
-                self.listbox.insert(tk.END, f"{id} - {title} - Episódio: {last_episode}")
+                self.listbox.insert(tk.END, f"{id} - {title} - Episódio: {last_episode}")  # Adicionando itens na lista
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao carregar séries/filmes: {str(e)}")
 
@@ -196,7 +193,6 @@ class WatchedManagerApp:
             add_window = tk.Toplevel(self.root)
             add_window.title("Adicionar Série/Filme")
             add_window.resizable(False, False)
-            # add_window.configure(background="#2c3e50")
 
             def center_add_window():
                 screen_width = add_window.winfo_screenwidth()
@@ -207,7 +203,7 @@ class WatchedManagerApp:
                 x = (screen_width - window_width) // 2
                 y = (screen_height - window_height) // 2
 
-                add_window.geometry(f"+{x}+{y}")
+                add_window.geometry(f"+{x}+{y}")  # Centralizando a janela
 
             center_add_window()
             tk.Label(add_window, text="Título:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
@@ -225,52 +221,44 @@ class WatchedManagerApp:
 
     def add_watched(self, title, last_episode, add_window):
         try:
-            # Verifique se a série já existe no banco de dados
             cursor = self.conn.execute("SELECT * FROM watched WHERE title=?", (title,))
             if cursor.fetchone():
                 messagebox.showerror("Erro", "Série/filme já adicionado.")
                 return
 
-            # Adicionar dados ao banco de dados
             self.conn.execute("INSERT INTO watched (title, last_episode) VALUES (?, ?)", (title, last_episode))
-            self.conn.commit()
+            self.conn.commit()  # Confirmando a adição da nova série/filme
 
-            # Atualizar a lista após adicionar
-            self.load_watched()
-            add_window.destroy()
+            self.load_watched()  # Atualizando a lista
+            add_window.destroy()  # Fechando a janela de adição
             messagebox.showinfo("Sucesso", "Série/filme adicionado com sucesso!")
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao adicionar série/filme: {str(e)}")
 
     def delete_watched(self):
         try:
-            # Obtenha o item selecionado na lista
             selected_item = self.listbox.curselection()
             if selected_item:
                 index = selected_item[0]
                 item = self.listbox.get(index)
                 id = item.split(" - ")[0]
 
-                # Remova a série/filme do banco de dados
                 self.conn.execute("DELETE FROM watched WHERE id=?", (id,))
-                self.conn.commit()
+                self.conn.commit()  # Confirmando a exclusão da série/filme
                 messagebox.showinfo("Sucesso", "Série/filme deletado com sucesso!")
 
-                # Atualize a lista após excluir
-                self.load_watched()
+                self.load_watched()  # Atualizando a lista
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao deletar série/filme: {str(e)}")
 
     def edit_watched(self):
         try:
-            # Obtenha o item selecionado na lista
             selected_item = self.listbox.curselection()
             if selected_item:
                 index = selected_item[0]
                 item = self.listbox.get(index)
                 id, title, last_episode = item.split(" - ")
 
-                # Abra uma janela de edição para o número do episódio
                 edit_window = tk.Toplevel(self.root)
                 edit_window.resizable(False, False)
 
@@ -283,7 +271,7 @@ class WatchedManagerApp:
                     x = (screen_width - window_width) // 2
                     y = (screen_height - window_height) // 2
 
-                    edit_window.geometry(f"+{x}+{y}")
+                    edit_window.geometry(f"+{x}+{y}")  # Centralizando a janela
 
                 center_edit_window()
 
@@ -300,26 +288,22 @@ class WatchedManagerApp:
 
     def update_episode(self, id, new_episode, edit_window):
         try:
-            # Atualize o número do episódio no banco de dados
             self.conn.execute("UPDATE watched SET last_episode=? WHERE id=?", (new_episode, id))
-            self.conn.commit()
+            self.conn.commit()  # Confirmando a atualização do episódio
 
-            # Atualize a lista após editar
-            self.load_watched()
-
-            # Feche a janela de edição
+            self.load_watched()  # Atualizando a lista
             messagebox.showinfo("Sucesso", "Episódio editado com sucesso!")
-            edit_window.destroy()
+            edit_window.destroy()  # Fechando a janela de edição
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao atualizar episódio: {str(e)}")
 
 # Criando a instância do aplicativo
 if __name__ == "__main__":
     try:
-        customtkinter.set_appearance_mode("Light")
-        customtkinter.set_default_color_theme("dark-blue")
+        customtkinter.set_appearance_mode("Light")  # Configurando o modo de aparência
+        customtkinter.set_default_color_theme("dark-blue")  # Configurando o tema de cores
         root = customtkinter.CTk()
-        app = LoginApp(root)
-        root.mainloop()
+        app = LoginApp(root)  # Iniciando o aplicativo de login
+        root.mainloop()  # Executando o loop principal da interface gráfica
     except Exception as e:
         messagebox.showerror("Erro", f"Erro ao iniciar o aplicativo: {str(e)}")
