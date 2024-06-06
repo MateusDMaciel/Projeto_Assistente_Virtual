@@ -205,7 +205,7 @@ class WatchedManagerApp:
             cursor = self.conn.execute("SELECT id, title, last_episode FROM watched WHERE user_id=?", (self.user_id,))
             for row in cursor:
                 id, title, last_episode = row
-                self.listbox.insert(tk.END, f" {title} - Episódio: {last_episode}")
+                self.listbox.insert(tk.END, f"{id} - {title} - Episódio: {last_episode}")
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao carregar séries/filmes: {str(e)}")
 
